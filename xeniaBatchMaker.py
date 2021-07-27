@@ -18,11 +18,16 @@ def main():
 		sys.exit()
 	print("Select your Xenia executable (Regular or Canary). Created shortcuts will use this executable.")
 	xeniaExe = askopenfilename(filetypes=[("Xenia Executable", ".exe")])
+	print(xeniaExe)
+	if xeniaExe == "":
+		inputHidden("\nAction cancelled. Press Enter to exit.")
+		sys.exit()
 	if not path.isfile(xeniaExe):
 		inputHidden("\nInvalid executable path. Press Enter to exit.")
 		sys.exit()
-	print("\nSelect your Xenia Content directory.")
+	print("\nSelect the Content directory that contains your Xenia games.")
 	contentDir = askdirectory(title="Xenia Content Directory")
+	print(contentDir)
 	if contentDir == "":
 		inputHidden("\nAction cancelled. Press Enter to exit.")
 		sys.exit()
@@ -31,9 +36,10 @@ def main():
 		sys.exit()
 	contentDir = path.join(contentDir, "0000000000000000")
 	if not path.isdir(contentDir):
-		inputHidden("\nInvalid folder path. Press Enter to exit.")
+		inputHidden("\nDirectory does not contain \"0000000000000000\" subfolder.\nInvalid folder path. Press Enter to exit.")
 		sys.exit()
 
+	print("\nCreating batch files...\n")
 	numBatchFiles = 0
 	duplicateCreated = False
 	namesAndPaths = {}
