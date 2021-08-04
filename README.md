@@ -7,3 +7,8 @@ For example, the game file
 `C:\Content\0000000000000000\58410912\000D0000\813B8117E82BB641BE619486127F36F3B0EF9D8A58` will result in a batch file called `Worms 2 - Armageddon.bat`. Running this file will open the desired game in a provided copy of Xenia (or Xenia Canary, whatever you choose).
 
 Note that Xenia games do not have to be stored in the same folder as Xenia, but they must be stored in a `Content/0000000000000000` folder as described above.
+
+### CLI Usage
+You can either open the executable directly, where you will be asked to locate your Xenia executable and Content directory (and a default output folder will be used), or you can define your own paths via command line. For example:
+
+`"Xenia Batch Maker.exe" -x "C:\Emulators\Xenia\xenia.exe" -c "C:\Content" --output "C:\Emulators\Xenia\Shortcuts"`
