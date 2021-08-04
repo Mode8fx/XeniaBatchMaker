@@ -4,40 +4,54 @@ from os import path, walk, mkdir
 import shutil
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, askdirectory
+import getopt
 from gatelib import *
 
+xeniaExe = ""
+contentDir = ""
 outputDir = path.join(getCurrFolder(), "Xenia Shortcuts")
 titleByte = 0x1692
 addOnByte = 0x412
+discByte = 0x412
 
 def main():
+	global xeniaExe, contentDir, outputDir
 	Tk().withdraw()
+	clearScreen()
+	printTitle("Xenia Batch Maker")
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "hx:c:", ["help", "output="])
+		for opt, arg in opts:
+			if opt == "-x":
+				xeniaExe = checkForValidXeniaExe(arg)
+			elif opt == "-c":
+				contentDir = checkForValidContentDir(arg)
+			elif opt == "--output":
+				outputDir = arg
+		if xeniaExe == "" or contentDir == "":
+			printCMDUsage()
+			xeniaExe = ""
+			contentDir = ""
+			outputDir = path.join(getCurrFolder(), "Xenia Shortcuts")
+	except getopt.GetoptError as err:
+		print(err)
+		printCMDUsage()
+		sys.exit(2)
+	print()
 	if path.exists(outputDir):
 		print("The directory \""+outputDir+"\" already exists. Either remove or rename this directory.")
 		inputHidden("Press Enter to exit.")
 		sys.exit()
-	print("Select your Xenia executable (Regular or Canary). Created shortcuts will use this executable.")
-	xeniaExe = askopenfilename(filetypes=[("Xenia Executable", ".exe")])
-	print(xeniaExe)
 	if xeniaExe == "":
-		inputHidden("\nAction cancelled. Press Enter to exit.")
-		sys.exit()
-	if not path.isfile(xeniaExe):
-		inputHidden("\nInvalid executable path. Press Enter to exit.")
-		sys.exit()
-	print("\nSelect the Content directory that contains your Xenia games.")
-	contentDir = askdirectory(title="Xenia Content Directory")
-	print(contentDir)
+		print("Select your Xenia executable (Regular or Canary). Created shortcuts will use this executable.")
+		xeniaExe = askopenfilename(filetypes=[("Xenia Executable", ".exe")])
+		print(xeniaExe)
+		xeniaExe = checkForValidXeniaExe(xeniaExe)
 	if contentDir == "":
-		inputHidden("\nAction cancelled. Press Enter to exit.")
-		sys.exit()
-	if not (path.isdir(contentDir) and path.basename(contentDir).lower() == "content"):
-		inputHidden("\nInvalid folder path. Press Enter to exit.")
-		sys.exit()
-	contentDir = path.join(contentDir, "0000000000000000")
-	if not path.isdir(contentDir):
-		inputHidden("\nDirectory does not contain \"0000000000000000\" subfolder.\nInvalid folder path. Press Enter to exit.")
-		sys.exit()
+		print("\nSelect the Content directory that contains your Xenia games.")
+		contentDir = askdirectory(title="Xenia Content Directory")
+		print(contentDir)
+		contentDir = checkForValidContentDir(contentDir)
 
 	print("\nCreating batch files...\n")
 	numBatchFiles = 0
@@ -48,13 +62,16 @@ def main():
 			if path.basename(root).lower() in [
 				"00007000", # Games On Demand
 				"000d0000", # XBLA
-				"00000002"  # Indie Games / Addons
+				"00000002", # Indie Games / Addons
+				"00004000"  # Discs
 				]:
 				filePath = path.join(root, file)
 				title = getTitleAtByte(filePath, titleByte)
 				if title == "":
 					continue
-				if path.basename(root).lower() == "00000002":
+				if path.basename(root).lower() == "00004000":
+					title = getTitleAtByte(filePath, discByte)
+				elif path.basename(root).lower() == "00000002":
 					if title == "Indie Games":
 						title = getTitleAtByte(filePath, addOnByte)
 					else:
@@ -125,6 +142,38 @@ def getTitleAtByte(filePath, byteNum):
 			else:
 				lastByteWasZero = True
 	return title
+
+def checkForValidXeniaExe(xeniaExe):
+	if xeniaExe == "":
+		inputHidden("\nAction cancelled. Press Enter to exit.")
+		sys.exit()
+	if not path.isfile(xeniaExe):
+		inputHidden("\nInvalid executable path. Press Enter to exit.")
+		sys.exit()
+	return xeniaExe
+
+def checkForValidContentDir(contentDir):
+	if contentDir == "":
+		inputHidden("\nAction cancelled. Press Enter to exit.")
+		sys.exit()
+	if not (path.isdir(contentDir) and path.basename(contentDir).lower() == "content"):
+		inputHidden("\nInvalid folder path. Press Enter to exit.")
+		sys.exit()
+	contentDir = path.join(contentDir, "0000000000000000")
+	if not path.isdir(contentDir):
+		inputHidden("\nDirectory does not contain \"0000000000000000\" subfolder.\nInvalid folder path. Press Enter to exit.")
+		sys.exit()
+	return contentDir
+
+def printCMDUsage():
+	progName = "\"Xenia Batch Maker.exe\"" if getattr(sys, 'frozen', False) else "\"xeniaBatchMaker.py\""
+	print("\nCLI Usage: "+progName+" -x <Xenia executable> -c <Xenia Content directory> -o <output folder>")
+	print()
+	print("-x <Xenia executable; can be normal or canary>")
+	print("-c <Xenia Content directory; batch files will be created for all games found in this directory>")
+	print("--output <optional; output folder; will contain the created .bat files; will be created if it doesn't already exist>")
+	print()
+	print("====================")
 
 if __name__ == "__main__":
 	main()
